@@ -1,0 +1,122 @@
+const User = require("../models/User");
+const Paciente = require("../models/Paciente");
+const Psicologo = require("../models/Psicologo");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
+module.exports = {
+  async register(req, res) {
+    const { username, password, role, crp, nome, telefone, endereco } = req.body;
+
+    // Verificar se o tipo de usuário é válido
+    if (!['paciente', 'psicologo'].includes(role)) {
+      return res.status(400).json({ error: "Tipo de usuário inválido." });
+    }
+
+    // Verificar se o CRP é fornecido para psicólogos
+    if (role === 'psicologo' && !crp) {
+      return res.status(400).json({ error: "CRP é obrigatório para psicólogos." });
+    }
+
+    // Verificar se o CRP já existe para psicólogos
+    if (role === 'psicologo') {
+      const crpExists = await Psicologo.findOne({ where: { crp } });
+      if (crpExists) return res.status(400).json({ error: "CRP já cadastrado." });
+    }
+
+    // Verificar se o nome de usuário já existe
+    const userExists = await User.findOne({ where: { username } });
+    if (userExists) return res.status(400).json({ error: "Usuário já existe." });
+
+    // Criptografar a senha
+    const hashedPassword = await bcrypt.hash(password, 8);
+
+    // Criar o usuário
+    const user = await User.create({
+      username,
+      password: hashedPassword,
+      role,
+      nome,
+      telefone,
+      endereco
+    });
+
+    // Criar o paciente ou psicólogo associado ao usuário
+    if (role === 'psicologo') {
+      await Psicologo.create({
+        nome,  
+        crp,
+        user_id: user.id
+      });
+    } else if (role === 'paciente') {
+      await Paciente.create({
+        nome,  
+        user_id: user.id
+      });
+    }
+
+    // Retornar a resposta com os dados do usuário
+    return res.status(201).json({ id: user.id, username: user.username, role: user.role, nome: user.nome, telefone: user.telefone, endereco: user.endereco });
+  },
+
+  async login(req, res) {
+    const { username, password } = req.body;
+    
+    // Buscar o usuário no banco
+    const user = await User.findOne({ where: { username } });
+
+    // Verificar se o usuário existe e se a senha está correta
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      return res.status(401).json({ error: "Usuário ou senha inválidos." });
+    }
+
+    // Gerar o token JWT
+    const token = jwt.sign({ id: user.id, role: user.role }, process.env.JWT_SECRET, {
+      expiresIn: '1d'
+    });
+
+    // Retornar o token
+    return res.json({ token });
+  },
+  async update(req, res) {
+    const { id } = req.params; // O ID do usuário que será atualizado
+    const { nome, telefone, endereco } = req.body; // Campos que o usuário pode alterar
+
+    // Verificar se o id do usuário logado é o mesmo que o id que ele está tentando editar
+    if (parseInt(id) !== req.userId) {
+      return res.status(403).json({ error: "Você não pode editar outro usuário." });
+    }
+
+    // Buscar o usuário no banco
+    const user = await User.findByPk(id);
+    if (!user) {
+      return res.status(404).json({ error: "Usuário não encontrado." });
+    }
+
+    // Garantir que o username não seja alterado
+    if (req.body.username && req.body.username !== user.username) {
+      return res.status(400).json({ error: "O username não pode ser alterado." });
+    }
+
+    // Atualizar os campos do usuário
+    try {
+      await user.update({
+        nome, 
+        telefone, 
+        endereco
+      });
+
+      return res.status(200).json({ 
+        id: user.id, 
+        username: user.username, 
+        role: user.role, 
+        nome: user.nome, 
+        telefone: user.telefone, 
+        endereco: user.endereco 
+      });
+    } catch (error) {
+      return res.status(500).json({ error: "Erro ao atualizar o usuário." });
+    }
+  }
+
+};
