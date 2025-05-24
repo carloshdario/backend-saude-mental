@@ -2,6 +2,8 @@
 
 Este projeto é uma API RESTful construída com **Node.js**, **Express**, **Sequelize** e **MySQL**, seguindo boas práticas de organização e padrões de projeto como MVC e uso de variáveis de ambiente com dotenv.
 
+O projeto está configurado para funcionar juntamente com o projeto [frontend em Angular](https://github.com/guilherme-henrique-silva/projeto-integrador-1).
+
 ## 🚀 Tecnologias Utilizadas
 
 - [Node.js](https://nodejs.org/)
