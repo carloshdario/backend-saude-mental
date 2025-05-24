@@ -1,3 +1,4 @@
+const createDatabaseIfNotExists = require('../database/Database');
 const { Sequelize } = require('sequelize');
 const dbConfig = require('../config/database');
 
@@ -9,6 +10,7 @@ const Avaliacao = require('./Avaliacao');
 const Consulta = require('./Consulta');
 
 // Criando a conexão com o banco
+createDatabaseIfNotExists();
 const connection = new Sequelize(dbConfig);
 
 // Inicializando os modelos

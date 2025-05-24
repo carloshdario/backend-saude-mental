@@ -76,7 +76,7 @@ module.exports = {
     });
 
     // Retornar o token
-    return res.json({ token });
+    return res.json({ token, role: user.role, id: user.id, nome: user.nome });
   },
   async update(req, res) {
     const { id } = req.params; // O ID do usuário que será atualizado
