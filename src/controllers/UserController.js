@@ -3,6 +3,7 @@ const Paciente = require("../models/Paciente");
 const Psicologo = require("../models/Psicologo");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const { password } = require("../config/database");
 
 module.exports = {
   async register(req, res) {
@@ -116,6 +117,38 @@ module.exports = {
       });
     } catch (error) {
       return res.status(500).json({ error: "Erro ao atualizar o usuário." });
+    }
+  },
+
+  async get(req, res) {
+    const { id } = req.params;
+
+    // Verificar se o id do usuário logado é o mesmo que o id que ele está tentando editar
+    if (parseInt(id) !== req.userId) {
+      return res.status(403).json({ error: "Você não pode editar outro usuário." });
+    }
+
+    try {
+      const user = await User.findByPk(id, {
+        attributes: ['id', 'username', 'password', 'role', 'nome', 'telefone', 'endereco']
+      });
+
+      if (!user) {
+        return res.status(404).json({ error: 'Usuário não encontrado' });
+      }
+
+      // Se for psicólogo, buscar o CRP
+      if (user.role === 'psicologo') {
+        const psicologo = await Psicologo.findOne({ where: { user_id: user.id } });
+        return res.json({ ...user.toJSON(), password:'', crp: psicologo?.crp });
+      }
+
+      // Se for paciente, pode retornar sem o CRP
+      return res.json({ ...user.toJSON(), password:'', crp: null });
+
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ error: 'Erro ao buscar o usuário' });
     }
   }
 
