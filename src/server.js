@@ -7,6 +7,7 @@ const port = 3000;
 const connection = require("./models"); // Vai sincronizar os modelos
 require("./models");
 const consultasRoutes = require("./routes/consultasRoutes")
+const avaliacoesRoutes = require("./routes/avaliacoesRoutes")
 const userRoutes = require("./routes/userRoutes");
 const privateRoutes = require("./routes/privateRoutes");
 const resourceRoutes = require("./routes/resourceRoutes");
@@ -18,6 +19,7 @@ app.use("/api", userRoutes);
 app.use("/api", privateRoutes);
 app.use("/api", resourceRoutes);
 app.use("/api", consultasRoutes);
+app.use("/api", avaliacoesRoutes);
 
 connection.sync().then(() => {
   app.listen(port, () => {

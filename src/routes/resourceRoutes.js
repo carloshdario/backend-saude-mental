@@ -26,14 +26,14 @@ router.get("/psicologos", auth, async (req, res) => {
 });
 
 // Avaliação
-router.post("/avaliacoes", auth, async (req, res) => {
-  const avaliacao = await Avaliacao.create(req.body);
-  res.json(avaliacao);
-});
+// router.post("/avaliacoes", auth, async (req, res) => {
+//   const avaliacao = await Avaliacao.create(req.body);
+//   res.json(avaliacao);
+// });
 
-router.get("/avaliacoes", auth, async (req, res) => {
-  const avaliacoes = await Avaliacao.findAll();
-  res.json(avaliacoes);
-});
+// router.get("/avaliacoes", auth, async (req, res) => {
+//   const avaliacoes = await Avaliacao.findAll();
+//   res.json(avaliacoes);
+// });
 
 module.exports = router;

@@ -183,35 +183,54 @@ module.exports = {
   },
 
   async get(req, res) {
-    const { id } = req.params;
+    const { id, nome } = req.query;
 
-    // Verificar se o id do usuário logado é o mesmo que o id que ele está tentando editar
-    if (parseInt(id) !== req.userId) {
-      return res.status(403).json({ error: "Você não pode editar outro usuário." });
-    }
+    if (id) {
 
-    try {
-      const user = await User.findByPk(id, {
-        attributes: ['id', 'username', 'password', 'role', 'nome', 'telefone', 'endereco']
-      });
-
-      if (!user) {
-        return res.status(404).json({ error: 'Usuário não encontrado' });
+      // Verificar se o id do usuário logado é o mesmo que o id que ele está tentando editar
+      if (parseInt(id) !== req.userId) {
+        return res.status(403).json({ error: "Você não pode editar outro usuário." });
       }
 
-      // Se for psicólogo, buscar o CRP
-      if (user.role === 'psicologo') {
-        const psicologo = await Psicologo.findOne({ where: { user_id: user.id } });
-        return res.json({ ...user.toJSON(), password:'', crp: psicologo?.crp });
+      try {
+        const user = await User.findByPk(id, {
+          attributes: ['id', 'username', 'password', 'role', 'nome', 'telefone', 'endereco']
+        });
+  
+        if (!user) {
+          return res.status(404).json({ error: 'Usuário não encontrado' });
+        }
+  
+        // Se for psicólogo, buscar o CRP
+        if (user.role === 'psicologo') {
+          const psicologo = await Psicologo.findOne({ where: { user_id: user.id } });
+          return res.json({ ...user.toJSON(), password:'', crp: psicologo?.crp });
+        }
+  
+        // Se for paciente, pode retornar sem o CRP
+        return res.json({ ...user.toJSON(), password:'', crp: null });
+  
+      } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Erro ao buscar o usuário' });
       }
-
-      // Se for paciente, pode retornar sem o CRP
-      return res.json({ ...user.toJSON(), password:'', crp: null });
-
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: 'Erro ao buscar o usuário' });
     }
+
+    if (nome) {
+      try {
+        const user = await User.findOne(
+          { attributes: ['id', 'username', 'role', 'nome', 'telefone', 'endereco'] },
+          { where: { nome } });
+        if (!user) return res.status(404).json({ error: 'Usuário não encontrado' });
+        return res.json(user);
+
+      } catch (error) {
+        console.error(error);
+        return res.status(500).json({ error: 'Erro ao buscar o usuário' });
+      }
+    }
+
+    return res.status(400).json({ error: 'Parâmetro "id" ou "nome" é obrigatório' });
   },
 
   async delete(req, res) {
@@ -222,11 +241,6 @@ module.exports = {
     if (!user) {
       return res.status(404).json({ error: "Usuário não encontrado." });
     }
-
-    // Verifica se o usuário está tentando deletar a si mesmo
-    // if (parseInt(id) !== req.userId) {
-    //   return res.status(403).json({ error: "Você não tem permissão para deletar este usuário." });
-    // }
 
     try {
       // Deleta os registros relacionados, se existirem

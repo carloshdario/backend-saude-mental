@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middlewares/auth")
-const ConsultaController = require("../controllers/ConsultaController")
+const ConsultaController = require("../controllers/ConsultaController");
 
 router.get("/consultas", ConsultaController.index);
 router.post("/consultas", authMiddleware, ConsultaController.store);
