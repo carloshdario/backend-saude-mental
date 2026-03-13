@@ -1,35 +1,32 @@
-const createDatabaseIfNotExists = require('../database/Database');
 const { Sequelize } = require('sequelize');
 const dbConfig = require('../config/database');
+const fs = require('fs');
+const path = require('path');
 
-// Importando os modelos
-const User = require('./User');
-const Paciente = require('./Paciente');
-const Psicologo = require('./Psicologo');
-const Avaliacao = require('./Avaliacao');
-const Consulta = require('./Consulta');
-
-// Criando a conexão com o banco
-createDatabaseIfNotExists();
 const connection = new Sequelize(dbConfig);
 
-// Inicializando os modelos
-User.init(connection);
-Paciente.init(connection);
-Psicologo.init(connection);
-Avaliacao.init(connection);
-Consulta.init(connection);
+const models = {};
 
-// Associando os modelos
-User.associate({ Paciente, Psicologo });
-Paciente.associate({ User, Avaliacao, Consulta });
-Psicologo.associate({ User, Avaliacao, Consulta });
-Avaliacao.associate({ Paciente, Psicologo });
-Consulta.associate({ Paciente, Psicologo });
+// Lê todos os arquivos da pasta Models e inicializa
+fs.readdirSync(__dirname)
+  .filter(file => (file.indexOf('.') !== 0) && (file !== 'index.js') && (file.slice(-3) === '.js'))
+  .forEach(file => {
+    const model = require(path.join(__dirname, file));
+    if (model.init) {
+      model.init(connection);
+      models[model.name] = model;
+    }
+  });
 
-// Sincronizando as tabelas com o banco de dados
-connection.sync()
-  .then(() => console.log('Tabelas sincronizadas'))
-  .catch((err) => console.error('Erro ao sincronizar as tabelas:', err));
+// Executa as associações automaticamente
+Object.values(models).forEach(model => {
+  if (model.associate) {
+    model.associate(connection.models);
+  }
+});
 
-module.exports = connection;
+// Exporta a conexão e os modelos prontos para uso
+module.exports = {
+  connection,
+  ...models
+};
