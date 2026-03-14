@@ -1,42 +1,54 @@
-require("dotenv").config();
-const express = require("express");
-const cors = require('cors');
-const { connection } = require("./models");
+  require("dotenv").config();
+  const express = require("express");
+  const cors = require('cors');
 
-const userRoutes = require("./routes/userRoutes");
-const privateRoutes = require("./routes/privateRoutes");
-const resourceRoutes = require("./routes/resourceRoutes");
-const consultasRoutes = require("./routes/consultasRoutes");
-const avaliacaoRoutes = require("./routes/avaliacaoRoutes");
+  // --- IMPORTAÇÕES DO SWAGGER ---
+  const swaggerUi = require('swagger-ui-express');
+  const swaggerSpec = require('./config/swagger'); // Certifique-se que o caminho está correto
+  // ------------------------------
 
-const app = express();
-const port = process.env.PORT || 3000;
+  const { connection } = require("./models");
 
-app.use(cors());
-app.use(express.json());
+  const userRoutes = require("./routes/userRoutes");
+  const privateRoutes = require("./routes/privateRoutes");
+  const consultasRoutes = require("./routes/consultasRoutes");
+  const avaliacaoRoutes = require("./routes/avaliacaoRoutes");
 
-// Prefixo /api para todas as rotas
-app.use("/api", userRoutes);
-app.use("/api", privateRoutes);
-app.use("/api", consultasRoutes);
-app.use("/api", avaliacaoRoutes);
-app.use("/api", resourceRoutes);
+  const app = express();
+  const port = process.env.PORT || 3000;
 
-// --- ADICIONE ESTE BLOCO AQUI ---
-// Middleware para tratar erros globais e evitar que a API caia
-app.use((err, req, res, next) => {
-  console.error('⚠️ Erro interno detectado:', err.stack);
-  res.status(500).json({ error: 'Erro interno no servidor do Mentalize.' });
+  app.use(cors());
+  app.use(express.static("public"));
+  app.use(express.json());
+
+  // --- ROTA DA DOCUMENTAÇÃO SWAGGER ---
+  // Acessível em: http://localhost:3000/api-docs
+app.get("/swagger.json", (req, res) => {
+  res.setHeader("Content-Type", "application/json");
+  res.send(swaggerSpec);
 });
-// --------------------------------
 
-connection.sync({ alter: true })
-  .then(() => {
-    console.log('✅ Banco de dados sincronizado.');
-    app.listen(port, () => {
-      console.log(`🚀 API Mentalize rodando em http://localhost:${port}/api`);
-    });
-  })
-  .catch(err => {
-    console.error('❌ Erro crítico na sincronização:', err);
+  // Prefixo /api para todas as rotas
+  app.use("/api", userRoutes);
+  app.use("/api", privateRoutes);
+  app.use("/api", consultasRoutes);
+  app.use("/api", avaliacaoRoutes);
+  
+
+  // Middleware para tratar erros globais
+  app.use((err, req, res, next) => {
+    console.error('⚠️ Erro interno detectado:', err.stack);
+    res.status(500).json({ error: 'Erro interno no servidor do Mentalize.' });
   });
+
+  connection.sync({ alter: true })
+    .then(() => {
+      console.log('✅ Banco de dados sincronizado.');
+      app.listen(port, () => {
+        console.log(`🚀 API Mentalize rodando em http://localhost:${port}/api`);
+        console.log(`📄 Swagger UI disponível em http://localhost:${port}/api-docs`);
+      });
+    })
+    .catch(err => {
+      console.error('❌ Erro crítico na sincronização:', err);
+    });
