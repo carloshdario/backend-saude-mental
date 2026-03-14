@@ -66,5 +66,32 @@ module.exports = {
     } catch (err) {
       return res.status(500).json({ error: err.message });
     }
-  }
+  },
+
+async listPsicologos(req, res) {
+    try {
+      const { Psicologo, User } = require("../models");
+      
+      // Fazemos um JOIN para pegar o nome do User, mas o ID do Psicologo
+      const profissionais = await Psicologo.findAll({
+        include: [{
+          model: User,
+          as: 'user', // Verifique se o nome da associação no seu model é 'user'
+          attributes: ['nome']
+        }],
+        attributes: ['id'] // Esse é o ID da tabela psicologos!
+      });
+
+      // Formatamos para o Angular receber bonitinho
+      const lista = profissionais.map(p => ({
+        id: p.id,
+        nome: p.user ? p.user.nome : "Profissional Sem Nome"
+      }));
+
+      return res.json(lista);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "Erro ao listar psicólogos" });
+    }
+  },
 };

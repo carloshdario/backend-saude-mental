@@ -8,22 +8,43 @@ class Avaliacao extends Model {
         allowNull: false,
         defaultValue: DataTypes.NOW
       },
+      descricao: DataTypes.STRING,
+      cid: DataTypes.STRING,
       pontuacao: {
-        type: DataTypes.INTEGER, // Essencial para o gráfico (0-10)
+        type: DataTypes.INTEGER,
         allowNull: false
       },
-      risco: DataTypes.STRING,      // Ex: "Grave", "Moderado"
-      observacoes: DataTypes.TEXT
+      observacoes: DataTypes.TEXT,
+      // ESTES CAMPOS SÃO OBRIGATÓRIOS AQUI PARA O CREATE FUNCIONAR:
+      paciente_id: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+      },
+      psicologo_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+      },
+      consulta_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+      },
+      risco: {
+        type: DataTypes.STRING,
+        allowNull: true
+      }
     }, { 
       sequelize,
-      tableName: 'avaliacoes' 
+      tableName: 'avaliacoes',
+      underscored: true 
     });
   }
 
   static associate(models) {
-    this.belongsTo(models.User, { foreignKey: 'pacienteId', as: 'paciente' });
-    this.belongsTo(models.User, { foreignKey: 'psicologoId', as: 'psicologo' });
+    this.belongsTo(models.Paciente, { foreignKey: 'paciente_id', as: 'paciente' });
+    this.belongsTo(models.Psicologo, { foreignKey: 'psicologo_id', as: 'psicologo' });
+    this.belongsTo(models.Consulta, { foreignKey: 'consulta_id', as: 'consulta' });
   }
 }
 
 module.exports = Avaliacao;
+
