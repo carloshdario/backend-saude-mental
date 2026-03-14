@@ -1,0 +1,16 @@
+.swagger-ui .topbar {
+  background: linear-gradient(90deg, #0d6efd, #0a58ca);
+}
+
+.swagger-ui .info h2 {
+  color: #0d6efd;
+  font-weight: bold;
+}
+
+.swagger-ui .btn.execute {
+  background-color: #0d6efd;
+}
+
+.swagger-ui .opblock {
+  border-radius: 10px;
+}

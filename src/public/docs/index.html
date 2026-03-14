@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mentalize API Docs</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist/swagger-ui.css">
+    <link rel="stylesheet" href="docs.css">
+</head>
+<body>
+
+    <header class="navbar bg-primary-gradient">
+        <div class="brand">
+            Mentalize<span class="brand-dot">.</span>
+        </div>
+        <div class="navbar-actions">
+            <div class="search-container">
+                <input type="text" id="search" placeholder="Buscar endpoint..." autocomplete="off" />
+            </div>
+            <button id="toggleTheme" aria-label="Alternar tema" title="Alternar tema">
+                <span class="icon-light">☀️</span>
+                <span class="icon-dark">🌙</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="layout">
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3>API</h3>
+                <nav>
+                    <a href="#autenticacao">Autenticação</a>
+                    <a href="#usuarios">Usuários</a>
+                    <a href="#consultas">Consultas</a>
+                    <a href="#avaliacoes">Avaliações</a>
+                </nav>
+            </div>
+            
+            <div class="sidebar-section">
+                <h3>Links Úteis</h3>
+                <nav>
+                    <a href="/swagger.json" target="_blank">Swagger Raw (JSON)</a>
+                </nav>
+            </div>
+        </aside>
+
+        <main class="content">
+            <div id="swagger-ui"></div>
+        </main>
+    </div>
+
+    <script src="https://unpkg.com/swagger-ui-dist/swagger-ui-bundle.js"></script>
+    <script src="docs.js"></script>
+</body>
+</html>
