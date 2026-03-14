@@ -1,37 +1,42 @@
 require("dotenv").config();
 const express = require("express");
 const cors = require('cors');
-
-// Importamos a 'connection' de dentro do objeto exportado pelo index dos models
 const { connection } = require("./models");
 
 const userRoutes = require("./routes/userRoutes");
 const privateRoutes = require("./routes/privateRoutes");
 const resourceRoutes = require("./routes/resourceRoutes");
 const consultasRoutes = require("./routes/consultasRoutes");
+const avaliacaoRoutes = require("./routes/avaliacaoRoutes");
 
 const app = express();
 const port = process.env.PORT || 3000;
 
-// Middlewares
 app.use(cors());
 app.use(express.json());
 
-// Rotas
+// Prefixo /api para todas as rotas
 app.use("/api", userRoutes);
 app.use("/api", privateRoutes);
-app.use("/api", resourceRoutes);
 app.use("/api", consultasRoutes);
+app.use("/api", avaliacaoRoutes);
+app.use("/api", resourceRoutes);
 
-// Inicialização do Banco e Servidor
-// Removi o sync() por ser perigoso em produção, mas mantive a autenticação
-connection.authenticate()
+// --- ADICIONE ESTE BLOCO AQUI ---
+// Middleware para tratar erros globais e evitar que a API caia
+app.use((err, req, res, next) => {
+  console.error('⚠️ Erro interno detectado:', err.stack);
+  res.status(500).json({ error: 'Erro interno no servidor do Mentalize.' });
+});
+// --------------------------------
+
+connection.sync({ alter: true })
   .then(() => {
-    console.log('✅ Conexão com o banco de dados estabelecida com sucesso.');
+    console.log('✅ Banco de dados sincronizado.');
     app.listen(port, () => {
-      console.log(`🚀 Servidor rodando em http://localhost:${port}`);
+      console.log(`🚀 API Mentalize rodando em http://localhost:${port}/api`);
     });
   })
   .catch(err => {
-    console.error('❌ Erro ao conectar com o banco de dados:', err);
+    console.error('❌ Erro crítico na sincronização:', err);
   });

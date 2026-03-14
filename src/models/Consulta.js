@@ -6,36 +6,27 @@ class Consulta extends Model {
       data: {
         type: DataTypes.DATE,
         allowNull: false,
-        validate: {
-          isDate: true, // Valida se o valor é uma data
-        }
       },
       status: {
-        type: DataTypes.STRING, // Ex: 'agendada', 'realizada', 'cancelada'
+        type: DataTypes.STRING,
         defaultValue: 'agendada',
-        allowNull: false
       },
-      observacoes: {
-        type: DataTypes.TEXT,
-        allowNull: true
-      },
+      observacoes: DataTypes.TEXT,
       paciente_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: 'pacientes', // Certifique-se de que o nome da tabela no banco é "pacientes"
-          key: 'id'
-        }
+        references: { model: 'pacientes', key: 'id' }
       },
       psicologo_id: {
         type: DataTypes.INTEGER,
         allowNull: false,
-        references: {
-          model: 'psicologos', // Certifique-se de que o nome da tabela no banco é "psicologos"
-          key: 'id'
-        }
+        references: { model: 'psicologos', key: 'id' }
       }
-    }, { sequelize, modelName: 'Consulta' });
+    }, { 
+      sequelize, 
+      modelName: 'Consulta',
+      underscored: true // Importante para bater com paciente_id
+    });
   }
 
   static associate(models) {

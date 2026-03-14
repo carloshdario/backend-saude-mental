@@ -1,65 +1,106 @@
 const ConsultaService = require("../services/ConsultaService");
+const { Paciente, Psicologo } = require("../models");
 
-module.exports = {
-  async index(req, res) {
+class ConsultaController {
+  
+  // Método chamado pelo Select dinâmico do Angular
+  async listarPorPaciente(req, res) {
     try {
-      // Criamos um objeto de filtros combinando Query Params e Path Params
-      const filtros = { ...req.query };
-
-      // Se a rota for /pacientes/:id/consultas, o Express preenche req.params.id
-      // Verificamos a URL para saber onde atribuir esse ID
-      if (req.params.id) {
-        if (req.baseUrl.includes('pacientes')) {
-          filtros.paciente_id = req.params.id;
-        } else if (req.baseUrl.includes('psicologos')) {
-          filtros.psicologo_id = req.params.id;
-        }
-      }
-
-      const consultas = await ConsultaService.listar(filtros);
-      return res.status(200).json(consultas);
+      const { pacienteId } = req.params;
+      // Reutiliza a lógica de listagem passando o filtro do paciente
+      const consultas = await ConsultaService.listar({ paciente_id: pacienteId });
+      return res.json(consultas);
     } catch (error) {
-      console.error(error);
-      return res.status(500).json({ error: "Erro ao buscar consultas." });
+      console.error("Erro ao listar consultas por paciente:", error);
+      return res.status(500).json({ error: "Erro interno ao buscar consultas do paciente." });
     }
-  },
+  }
 
   async store(req, res) {
     try {
-      const consulta = await ConsultaService.agendar(req.userId, req.body);
+      let paciente_id = req.body.paciente_id || req.body.pacienteId; // Aceita os dois formatos
+      let psicologo_id = req.body.psicologo_id || req.body.psicologoId;
+
+      if (req.userRole === 'paciente') {
+        const paciente = await Paciente.findOne({ where: { user_id: req.userId } });
+        if (!paciente) return res.status(404).json({ error: "Perfil não encontrado." });
+        paciente_id = paciente.id;
+      } else if (req.userRole === 'psicologo') {
+        const psicologo = await Psicologo.findOne({ where: { user_id: req.userId } });
+        if (!psicologo) return res.status(404).json({ error: "Perfil não encontrado." });
+        psicologo_id = psicologo.id;
+      }
+
+      const consulta = await ConsultaService.agendar({
+        data: req.body.data,
+        paciente_id: Number(paciente_id),
+        psicologo_id: Number(psicologo_id),
+        observacoes: req.body.observacoes
+      });
       return res.status(201).json(consulta);
     } catch (error) {
-      const status = error.message === "PACIENTE_NAO_ENCONTRADO" ? 404 : 403;
-      return res.status(status).json({ error: error.message });
+      return res.status(500).json({ error: "Erro ao agendar consulta." });
     }
-  },
+  }
 
+  async index(req, res) {
+    try {
+      const filtros = {};
+      if (req.userRole === 'paciente') {
+        const p = await Paciente.findOne({ where: { user_id: req.userId } });
+        filtros.paciente_id = p?.id;
+      } else if (req.userRole === 'psicologo') {
+        const ps = await Psicologo.findOne({ where: { user_id: req.userId } });
+        filtros.psicologo_id = ps?.id;
+      }
+      const consultas = await ConsultaService.listar(filtros);
+      return res.json(consultas);
+    } catch (error) {
+      return res.status(500).json({ error: "Erro ao buscar consultas." });
+    }
+  }
+  
+
+  /**
+   * Busca uma consulta específica por ID
+   */
   async show(req, res) {
     try {
       const consulta = await ConsultaService.buscarPorId(req.params.id);
-      return res.status(200).json(consulta);
+      if (!consulta) return res.status(404).json({ error: "Consulta não encontrada." });
+      return res.json(consulta);
     } catch (error) {
-      return res.status(404).json({ error: error.message });
-    }
-  },
-
-  async update(req, res) {
-    try {
-      const consulta = await ConsultaService.atualizar(req.params.id, req.userId, req.body);
-      return res.status(200).json(consulta);
-    } catch (error) {
-      const status = error.message === "SEM_PERMISSAO" ? 403 : 404;
-      return res.status(status).json({ error: error.message });
-    }
-  },
-
-  async delete(req, res) {
-    try {
-      await ConsultaService.cancelar(req.params.id, req.userId);
-      return res.status(204).send();
-    } catch (error) {
-      const status = error.message === "SEM_PERMISSAO" ? 403 : 404;
-      return res.status(status).json({ error: error.message });
+      return res.status(500).json({ error: "Erro ao buscar detalhes da consulta." });
     }
   }
-};
+
+  /**
+   * Atualiza uma consulta
+   */
+  async update(req, res) {
+    try {
+      // Passa req.userId para o service validar se quem edita é o dono da consulta
+      const consulta = await ConsultaService.atualizar(req.params.id, req.userId, req.body);
+      return res.json(consulta);
+    } catch (error) {
+      console.error("--- ERRO NO BACKEND (ConsultaController.update) ---");
+      return res.status(400).json({ error: error.message });
+    }
+  }
+
+  /**
+   * Deleta/Cancela uma consulta
+   */
+  async delete(req, res) {
+    try {
+      await ConsultaService.cancelar(req.params.id);
+      return res.status(204).send();
+    } catch (error) {
+      console.error("--- ERRO NO BACKEND (ConsultaController.delete) ---");
+      return res.status(400).json({ error: error.message });
+    }
+  }
+}
+
+// IMPORTANTE: Exporta a instância para ser usada nas rotas
+module.exports = new ConsultaController();

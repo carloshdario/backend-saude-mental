@@ -3,16 +3,19 @@ const router = express.Router();
 const authMiddleware = require("../middlewares/auth");
 const ConsultaController = require("../controllers/ConsultaController");
 
-// Rotas padrão
+router.use(authMiddleware); // Aplica auth em todas as rotas abaixo
+
 router.get("/consultas", ConsultaController.index);
-router.post("/consultas", authMiddleware, ConsultaController.store);
-router.get("/consultas/:id", ConsultaController.show);
+router.post("/consultas", ConsultaController.store);
+router.get("/consultas/paciente/:pacienteId", ConsultaController.listarPorPaciente); // CORRIGIDO
+
+
+router.get("/consultas/:id", authMiddleware, ConsultaController.show);
 router.put("/consultas/:id", authMiddleware, ConsultaController.update);
 router.delete("/consultas/:id", authMiddleware, ConsultaController.delete);
 
-// Ajuste: O Controller refatorado usa o 'index' para filtrar por query params
-// Se você quiser manter essas URLs específicas, elas devem apontar para o index
-router.get("/pacientes/:id/consultas", ConsultaController.index);
-router.get("/psicologos/:id/consultas", ConsultaController.index);
-
+// Rotas de conveniência que usam a mesma lógica de listagem
+router.get("/pacientes/:id/consultas", authMiddleware, ConsultaController.index);
+router.get("/psicologos/:id/consultas", authMiddleware, ConsultaController.index);
+router.get('/consultas/paciente/:pacienteId', authMiddleware, (req, res) => ConsultaController.listarPorPaciente(req, res));
 module.exports = router;
