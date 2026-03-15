@@ -8,6 +8,7 @@
 const { Router } = require('express');
 const AvaliacaoController = require('../controllers/AvaliacaoController');
 const authMiddleware = require('../middlewares/auth');
+const roleMiddleware = require('../middlewares/roleMiddleware');
 
 const routes = new Router();
 
@@ -113,6 +114,8 @@ routes.get('/avaliacoes/progresso/:pacienteId', AvaliacaoController.getProgresso
 // Criar avaliação
 routes.post('/avaliacoes', AvaliacaoController.store);
 
+routes.get('/avaliacoes', authMiddleware, AvaliacaoController.index);
+
 /**
  * @swagger
  * /pacientes:
@@ -128,5 +131,7 @@ routes.post('/avaliacoes', AvaliacaoController.store);
 
 // Lista pacientes
 routes.get('/pacientes', AvaliacaoController.listarPacientes);
-
+// Adicione junto com as outras rotas de avaliacao
+routes.get('/avaliacoes/:id', authMiddleware, AvaliacaoController.show);
+routes.delete('/avaliacoes/:id', authMiddleware, roleMiddleware('psicologo'), AvaliacaoController.destroy);
 module.exports = routes;

@@ -108,6 +108,8 @@ router.put("/consultas/:id", ConsultaController.update);
  *         description: Consulta cancelada
  */
 router.delete("/consultas/:id", ConsultaController.delete);
+// Adicione junto com as outras rotas de consulta
+router.put('/consultas/:id/status', authMiddleware, ConsultaController.updateStatus);
 
 /**
  * Rotas auxiliares

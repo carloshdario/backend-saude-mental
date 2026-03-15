@@ -1,5 +1,6 @@
 const ConsultaService = require("../services/ConsultaService");
 const { Paciente, Psicologo } = require("../models");
+const { Consulta } = require('../models');
 
 class ConsultaController {
   
@@ -98,6 +99,27 @@ class ConsultaController {
     } catch (error) {
       console.error("--- ERRO NO BACKEND (ConsultaController.delete) ---");
       return res.status(400).json({ error: error.message });
+    }
+  }
+
+  async updateStatus(req, res) {
+    try {
+      const { id } = req.params;
+      const { status } = req.body; 
+
+      const consulta = await Consulta.findByPk(id);
+      
+      if (!consulta) {
+        return res.status(404).json({ error: 'Consulta não encontrada' });
+      }
+
+      consulta.status = status;
+      await consulta.save();
+
+      return res.json({ message: 'Status atualizado com sucesso', consulta });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: 'Erro ao atualizar status da consulta' });
     }
   }
 }

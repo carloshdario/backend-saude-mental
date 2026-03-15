@@ -7,7 +7,6 @@
   const { connection } = require("./models");
 
   const userRoutes = require("./routes/userRoutes");
-  const privateRoutes = require("./routes/privateRoutes");
   const consultasRoutes = require("./routes/consultasRoutes");
   const avaliacaoRoutes = require("./routes/avaliacaoRoutes");
 

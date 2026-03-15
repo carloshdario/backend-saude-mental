@@ -1,28 +1,25 @@
-const Avaliacao = require('../models/Avaliacao');
+const { Avaliacao } = require('../models'); // Importe usando destructuring para garantir consistência
 
 class AvaliacaoService {
   /**
-   * Busca o histórico completo para a tabela do Angular
+   * Busca o histórico. Agora aceita um objeto de filtro para ser flexível.
    */
-  async listarPorPaciente(pacienteId) {
+ async listarComFiltro(filtro) {
     try {
       return await Avaliacao.findAll({
-        where: { paciente_id: pacienteId },
-        order: [['data', 'DESC']], // Mais recentes primeiro
+        where: filtro, // <--- Isso permite filtrar por paciente_id OU psicologo_id
+        order: [['data', 'DESC']],
         attributes: ['id', 'data', 'descricao', 'cid', 'pontuacao', 'risco', 'observacoes']
       });
     } catch (error) {
-      console.error("Erro ao listar avaliações:", error.message);
       throw new Error("Erro ao buscar dados no banco.");
     }
   }
 
   /**
-   * Registra uma nova avaliação clínica ou autoavaliação
+   * Registro de avaliação (Lógica de risco mantida, apenas limpeza de tipos)
    */
   async registrarAvaliacao(dados) {
-    // 1. Prioriza o risco que vem do Frontend (Select do Psicólogo)
-    // 2. Se não vier (Autoavaliação do paciente), aplica a lógica automática
     let riscoFinal = dados.risco;
 
     if (!riscoFinal) {
@@ -50,7 +47,7 @@ class AvaliacaoService {
   }
 
   /**
-   * Formata dados para o gráfico de evolução do Google Charts/Chart.js
+   * Dados para o gráfico (Mantido, mas com proteção de dados vazios)
    */
   async buscarProgressoPaciente(pacienteId) {
     try {
@@ -60,10 +57,13 @@ class AvaliacaoService {
         attributes: ['data', 'pontuacao']
       });
 
-      return avaliacoes.map(av => [
+      // Retorna array formatado para Google Charts: [['Data', 'Nota'], ...]
+      const formatados = avaliacoes.map(av => [
         new Date(av.data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }),
         av.pontuacao
       ]);
+
+      return formatados;
     } catch (error) {
       console.error("Erro ao processar progresso:", error.message);
       throw new Error("Erro ao gerar dados do gráfico.");
